@@ -32,6 +32,10 @@ echo "Creating configuration file at $CONFIG_FILE..."
 if [[ ! -f "$CONFIG_FILE" ]]; then
     cat <<EOF > "$CONFIG_FILE"
 {
+    "host": "localhost",
+    "port": 9200,
+    "username": "user",
+    "password": "password",
     "sleep_interval": 3600
 }
 EOF
