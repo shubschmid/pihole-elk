@@ -21,23 +21,46 @@ logging.basicConfig(
     ]
 )
 
-# Configuration for Elasticsearch (with authentication and HTTPS)
-# Replace the host, port, username, and password with the appropriate values for your Elasticsearch instance.
-es = Elasticsearch(
-    [{'host': '123.123.123.123', 'port': 9200}],
-    http_auth=('fake_user', 'fake_password'),
-    scheme="https",  # If Elasticsearch is running with HTTPS
-    verify_certs=False  # If a self-signed certificate is being used
-)
-
 # Path to the Pi-hole SQLite database
 sqlite_db_path = "/etc/pihole/pihole-FTL.db"
 
 # Path to the file that stores the last timestamp
 id_file = "/var/lib/pihole-elasticsearch/last_processed_id.txt"
 
-# Path to the configuration file containing sleep interval
+# Path to the configuration file containing settings
 config_file = "/etc/pihole-elasticsearch/config.json"
+
+# Function to retrieve the configuration from the configuration file
+def get_config():
+    default_config = {
+        "host": "localhost",
+        "port": 9200,
+        "username": "user",
+        "password": "password",
+        "sleep_interval": 3600
+    }
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+                return {**default_config, **config}  # Merge with defaults
+        except json.JSONDecodeError:
+            logging.error("Error decoding configuration file. Using default settings.")
+            return default_config
+    else:
+        logging.warning("Configuration file not found. Using default settings.")
+        return default_config
+
+# Retrieve the configuration
+config = get_config()
+
+# Configure Elasticsearch client
+es = Elasticsearch(
+    [{'host': config["host"], 'port': config["port"]}],
+    http_auth=(config["username"], config["password"]),
+    scheme="https",  # If Elasticsearch is running with HTTPS
+    verify_certs=False  # If a self-signed certificate is being used
+)
 
 # Function to retrieve the last processed timestamp
 def get_last_processed_id():
@@ -51,20 +74,6 @@ def get_last_processed_id():
 def update_last_processed_id(id):
     with open(id_file, 'w') as f:
         f.write(str(id))
-
-# Function to read sleep interval from the configuration file
-def get_sleep_interval():
-    if os.path.exists(config_file):
-        with open(config_file, 'r') as f:
-            try:
-                config = json.load(f)
-                return config.get("sleep_interval", 3600)  # Default to 3600 seconds if not specified
-            except json.JSONDecodeError:
-                logging.error("Error decoding configuration file. Using default sleep interval.")
-                return 3600
-    else:
-        logging.warning("Configuration file not found. Using default sleep interval.")
-        return 3600
 
 # Main function to process and send data to Elasticsearch
 def process_data():
@@ -134,6 +143,6 @@ if __name__ == "__main__":
     while True:
         logging.info("Starting data processing...")
         process_data()
-        sleep_interval = get_sleep_interval()
+        sleep_interval = config["sleep_interval"]
         logging.info(f"Data processing complete. Sleeping for {sleep_interval} seconds.")
         time.sleep(sleep_interval)
