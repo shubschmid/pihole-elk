@@ -89,7 +89,8 @@ def process_data():
 
     # Retrieve the last processed timestamp
     last_id = get_last_processed_id()
-    logging.info(f"ID {last_id}")
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        logging.debug(f"ID {last_id}")
 
     # SQL query to retrieve only entries after the last timestamp
     sql_query = f"SELECT id, domain, client, datetime(timestamp, 'unixepoch', 'localtime'), timestamp from queries WHERE id > '{last_id}'"
@@ -97,7 +98,8 @@ def process_data():
     # Execute the SQL query
     try:
         cursor.execute(sql_query)
-        logging.info("SQL query successfully executed")
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug("SQL query successfully executed")
     except sqlite3.Error as e:
         logging.error(f"SQL query NOT successfully executed: {e}")
         conn.close()
@@ -128,7 +130,8 @@ def process_data():
 
         # Add index and document to Elasticsearch
         response = es.index(index=index_name, document=doc)
-        logging.info(f"Elasticsearch response: {response}")
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug(f"Elasticsearch response: {response}")
 
         # Update the last processed timestamp
         update_last_processed_id(row[0])
