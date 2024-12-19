@@ -29,7 +29,7 @@ chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
 
 # Step 3: Create the configuration file
 echo "Creating configuration file at $CONFIG_FILE..."
-if [[ ! -f "$CONFIG_FILE" ]]; then
+if [ ! -f "$CONFIG_FILE" ]; then
     cat <<EOF > "$CONFIG_FILE"
 {
     "host": "localhost",
