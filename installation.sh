@@ -2,7 +2,7 @@
 
 # Define variables
 SERVICE_NAME="pihole-elasticsearch"
-SCRIPT_NAME="pihole_elasticsearch_service.py"
+SCRIPT_NAME="pihole2elastic.py"
 INSTALL_DIR="/opt/$SERVICE_NAME"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
 LOG_DIR="/var/log/$SERVICE_NAME"
