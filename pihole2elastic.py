@@ -21,6 +21,10 @@ logging.basicConfig(
     ]
 )
 
+# Adjust logging level for Elasticsearch library
+logging.getLogger("elasticsearch").setLevel(logging.WARNING)  # Set to WARNING or higher to reduce verbosity
+# logging.getLogger("elasticsearch").disabled = True  # Uncomment to completely disable Elasticsearch logs
+
 # Path to the Pi-hole SQLite database
 sqlite_db_path = "/etc/pihole/pihole-FTL.db"
 
