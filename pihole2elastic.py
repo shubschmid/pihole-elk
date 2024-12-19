@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configure logging
-log_file = "/var/log/pihole_elasticsearch_service/pihole_elasticsearch_service.log"
+log_file = "/var/log/pihole-elasticsearch/pihole_elasticsearch_service.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
