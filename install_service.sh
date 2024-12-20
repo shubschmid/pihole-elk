@@ -10,9 +10,62 @@ DATA_DIR="/var/lib/$SERVICE_NAME"
 CONFIG_DIR="/etc/$SERVICE_NAME"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
+# Default configuration values
+DEFAULT_HOST="localhost"
+DEFAULT_PORT=9200
+DEFAULT_USERNAME="user"
+DEFAULT_PASSWORD="password"
+DEFAULT_SLEEP_INTERVAL=3600
+
+# Function to display help
+function display_help() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  --host        Elasticsearch host (default: $DEFAULT_HOST)"
+    echo "  --port        Elasticsearch port (default: $DEFAULT_PORT)"
+    echo "  --username    Elasticsearch username (default: $DEFAULT_USERNAME)"
+    echo "  --password    Elasticsearch password (default: $DEFAULT_PASSWORD)"
+    echo "  -h, --help    Display this help message"
+    exit 0
+}
+
+# Parse command-line arguments
+HOST="$DEFAULT_HOST"
+PORT="$DEFAULT_PORT"
+USERNAME="$DEFAULT_USERNAME"
+PASSWORD="$DEFAULT_PASSWORD"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --host)
+            HOST="$2"
+            shift 2
+            ;;
+        --port)
+            PORT="$2"
+            shift 2
+            ;;
+        --username)
+            USERNAME="$2"
+            shift 2
+            ;;
+        --password)
+            PASSWORD="$2"
+            shift 2
+            ;;
+        -h|--help)
+            display_help
+            ;;
+        *)
+            echo "Unknown option: $1"
+            display_help
+            ;;
+    esac
+done
+
 # Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
+   echo "This script must be run as root"
    exit 1
 fi
 
@@ -32,14 +85,14 @@ echo "Creating configuration file at $CONFIG_FILE..."
 if [ ! -f "$CONFIG_FILE" ]; then
     cat <<EOF > "$CONFIG_FILE"
 {
-    "host": "localhost",
-    "port": 9200,
-    "username": "user",
-    "password": "password",
-    "sleep_interval": 3600
+    "host": "$HOST",
+    "port": $PORT,
+    "username": "$USERNAME",
+    "password": "$PASSWORD",
+    "sleep_interval": $DEFAULT_SLEEP_INTERVAL
 }
 EOF
-    echo "Default configuration written to $CONFIG_FILE."
+    echo "Configuration file created with provided or default values."
 else
     echo "Configuration file already exists. Skipping creation."
 fi
