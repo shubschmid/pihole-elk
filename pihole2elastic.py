@@ -84,6 +84,8 @@ def process_data():
     try:
         # Connect to the SQLite database
         conn = sqlite3.connect(sqlite_db_path)
+        # Ignore decoding erros when reading db.
+        conn.text_factory = lambda b: b.decode(errors='ignore')
         logging.info("Connected to SQLite!")
     except sqlite3.Error as e:
         logging.error(f"Error: {e}")
@@ -112,34 +114,39 @@ def process_data():
     # Processing and sending to Elasticsearch
     row_count = 0
     for row in cursor:
-        # Extract the record's date (in the format "yyyy-MM-dd HH:mm:ss")
-        datetime_str = row[3]
-        
-        # Convert the date to ISO 8601 format "yyyy-MM-dd'T'HH:mm:ss"
-        iso_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S").isoformat()
-
-        # Create a document for Elasticsearch
-        doc = {
-            "id": row[0],
-            "domain": row[1],
-            "client": row[2],
-            "datetime": iso_datetime,  # The datetime field is now in ISO 8601 format
-            "timestamp": row[4],
-        }
-
-        # Create Elasticsearch index per date
-        # Extract only the year and month in the format "yyyy-MM"
-        date_part = "-".join(iso_datetime.split("T")[0].split("-")[:2])  
-        index_name = f"pihole-dns-logs-{date_part}"
-
-        # Add index and document to Elasticsearch
-        response = es.index(index=index_name, document=doc)
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
-            logging.debug(f"Elasticsearch response: {response}")
-
-        # Update the last processed timestamp
-        update_last_processed_id(row[0])
-        row_count += 1
+        try:
+            # Extract the record's date (in the format "yyyy-MM-dd HH:mm:ss")
+            datetime_str = row[3]
+            
+            # Convert the date to ISO 8601 format "yyyy-MM-dd'T'HH:mm:ss"
+            iso_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S").isoformat()
+    
+            # Create a document for Elasticsearch
+            doc = {
+                "id": row[0],
+                "domain": row[1],
+                "client": row[2],
+                "datetime": iso_datetime,  # The datetime field is now in ISO 8601 format
+                "timestamp": row[4],
+            }
+    
+            # Create Elasticsearch index per date
+            # Extract only the year and month in the format "yyyy-MM"
+            date_part = "-".join(iso_datetime.split("T")[0].split("-")[:2])  
+            index_name = f"pihole-dns-logs-{date_part}"
+    
+            # Add index and document to Elasticsearch
+            response = es.index(index=index_name, document=doc)
+            if logging.getLogger().isEnabledFor(logging.DEBUG):
+                logging.debug(f"Elasticsearch response: {response}")
+    
+            # Update the last processed timestamp
+            update_last_processed_id(row[0])
+            row_count += 1
+            
+        except Exception as e:
+            logging.error(f"Error in processing row with ID {row[0]}: {e}")
+            continue
 
     # Close the connection to the SQLite database
     conn.close()
